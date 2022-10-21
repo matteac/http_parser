@@ -12,7 +12,7 @@ Converts raw request to struct `Request` with it's properties
 ```rust
     for stream in listener.incoming(){
         let tcp_stream = stream.unwrap();
-        let request = http_parser::req(&tcp_stream);
+        let request = http_request_parser::req(&tcp_stream);
 ```
 
 ### And now you can use `Request` properties to respond
