@@ -18,20 +18,20 @@ Converts raw request to struct `Request` with it's properties
 ### And now you can use `Request` properties to respond
 
 ```rust
+        let mut response = String::new();
         if request.path == "/" {
-            let response = format!(
+            response = format!(
                 "HTTP/1.1 {}\n{}\r\n\r\nHi! you're in {}\n",
                 "200 Ok", "Content-Type: text/plain", request.path
             );
-            stream.write_all(response.as_bytes()).unwrap()
         } else {
-            let response = format!(
+            response = format!(
                 "HTTP/1.1 {}\n{}\r\n\r\nCannot {} {}\n",
                 "404 Not Found", "Content-Type: text/plain", request.method,
                 request.path
             );
-            stream.write_all(response.as_bytes()).unwrap ()
         }
+        tcp_stream.write_all(response.as_bytes()).unwrap()
 
     }
 ```
