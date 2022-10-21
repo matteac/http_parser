@@ -1,4 +1,4 @@
-# http_parser
+# http_request_parser
 Converts raw request to struct `Request` with it's properties
 
 ### The `Request` properties are:
