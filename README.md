@@ -11,7 +11,7 @@ Converts raw request to struct `Request` with it's properties
 ### Parse the raw string to `Request`
 ```rust
     for stream in listener.incoming(){
-        let tcp_stream = stream.unwrap();
+        let mut tcp_stream = stream.unwrap();
         let request = http_request_parser::req(&tcp_stream);
 ```
 
