@@ -5,7 +5,7 @@ use std::{io::Read, net::TcpStream};
 
 pub fn req(mut stream: &TcpStream) -> Request {
     let mut buffer = [0; 16384];
-    stream.read_exact(&mut buffer).unwrap();
+    stream.read(&mut buffer).unwrap();
 
     let mut buffer_v = Vec::from_iter(buffer.iter().copied());
 
