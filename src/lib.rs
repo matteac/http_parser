@@ -5,7 +5,7 @@ use std::{io::Read, net::TcpStream};
 
 pub fn req(mut stream: &TcpStream) -> Request {
     let mut buffer = [0; 16384];
-    stream.read(&mut buffer).unwrap();
+    stream.read_exact(&mut buffer).unwrap();
 
     let mut buffer_v = Vec::from_iter(buffer.iter().copied());
 
@@ -18,15 +18,15 @@ pub fn req(mut stream: &TcpStream) -> Request {
         req.push(i.to_string())
     }
 
-    let line_one: Vec<&str> = req[0].split(" ").collect();
+    let line_one: Vec<&str> = req[0].split(' ').collect();
 
     let method = line_one[0].to_string();
     let path = line_one[1].to_string();
 
-    let mut trash: Vec<&str> = line_one[2].split("/").collect(); //useless
+    let mut trash: Vec<&str> = line_one[2].split('/').collect(); //useless
     let version = trash[1].parse::<f32>().unwrap();
 
-    trash = req[req.len() - 1].split("\0").collect();
+    trash = req[req.len() - 1].split('\0').collect();
     let body = trash[0].to_string();
 
     req.remove(0);
@@ -35,11 +35,11 @@ pub fn req(mut stream: &TcpStream) -> Request {
 
     let headers: Vec<String> = req.to_vec(); // minus 2 'cause the last is the body and penultimate is "\r\n\r\n"
 
-    return Request {
+    Request {
         method,
         path,
         version,
         body,
         headers,
-    };
+    }
 }
