@@ -4,7 +4,7 @@ description = "Converts raw http request to a Request and build Response"
 version = "0.2.0"
 edition = "2021"
 license = "MIT/Apache-2.0"
-repository = "https://github.com/matteac/http_request_parser"
+repository = "https://github.com/matteac/http_parser"
 readme = "README.md"
 
 
