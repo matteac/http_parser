@@ -1,37 +1,25 @@
-# http_request_parser
-Converts raw request to struct `Request` with it's properties
+# http_parser
+Converts raw request to `Request` and build `Response`s 
 
-### The `Request` properties are:
- * `method` of type `String`
- * `path` of type `String`
- * `version` of type `f32`
- * `headers` of type `Vec<String>`
- * `body` of type `String`
-
-### Parse the raw string to `Request`
+### Parse the raw http request to `Request`
 ```rust
     for stream in listener.incoming(){
         let mut tcp_stream = stream.unwrap();
-        let request = http_request_parser::req(&tcp_stream);
+        let request = http_parser::Request::from(&tcp_stream);
 ```
 
-### And now you can use `Request` properties to respond
+### And now you can use `Request` properties to build a `Response` and send it
 
 ```rust
-        let mut response = String::new();
-        if request.path == "/" {
-            response = format!(
-                "HTTP/1.1 {}\n{}\r\n\r\nHi! you're in {}\n",
-                "200 Ok", "Content-Type: text/plain", request.path
-            );
-        } else {
-            response = format!(
-                "HTTP/1.1 {}\n{}\r\n\r\nCannot {} {}\n",
-                "404 Not Found", "Content-Type: text/plain", request.method,
-                request.path
-            );
-        }
-        tcp_stream.write_all(response.as_bytes()).unwrap()
+        let request = http_request_parser::Request::from(&tcp_stream);
+        let mut response = http_request_parser::Response::new();
 
+        if request.path == "/" {
+            response.body = "Hello, World!".to_owned();
+        } else {
+            response.headers = vec!["Content-Type: application/json".to_owned()];
+            response.body = format!("{{\n\t\"actualPath\":\"{}\"\n}}", request.path);
+        }
+        response.send(&tcp_stream)
     }
 ```
