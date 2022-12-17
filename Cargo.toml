@@ -1,5 +1,5 @@
 [package]
-name = "http-parser"
+name = "simple_http_parser"
 description = "Converts raw http request to a Request and build Response"
 version = "0.2.0"
 edition = "2021"
