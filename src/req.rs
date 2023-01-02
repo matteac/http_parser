@@ -1,46 +1,71 @@
 use std::io::Read;
 use std::net::TcpStream;
+use std::ops::Index;
+
+#[derive(Debug)]
+pub enum HTTPMethod {
+    GET,
+    POST,
+    HEAD,
+    PUT,
+    DELETE,
+    CONNECT,
+    OPTIONS,
+    TRACE,
+}
 
 #[derive(Debug)]
 pub struct Request {
-    pub method: String,
-    pub path: String, //path type gives errors
+    pub method: HTTPMethod,
+    pub path: String,
     pub version: f32,
     pub headers: Vec<String>,
     pub body: String,
 }
+
 impl Request {
     pub fn from(mut stream: &TcpStream) -> Request {
         let mut buffer = [0; 16384];
         stream.read(&mut buffer).expect("Error reading stream");
+        let mut req = String::new();
+        req.push_str(&String::from_utf8_lossy(&buffer));
 
-        let mut buffer_v = Vec::from_iter(buffer.iter().copied());
+        let mut request: Vec<&str> = req.split("\r\n").collect();
 
-        buffer_v.pop();
-        let raw_req = std::str::from_utf8(&buffer_v).unwrap().to_string();
-        let req_handler: Vec<&str> = raw_req.split("\r\n").collect();
-        let mut req: Vec<String> = vec![];
+        let start_line: Vec<&str> = request.index(0).split(" ").collect();
+        request.remove(0); // remove the start line from the request vector
 
-        for i in &req_handler {
-            req.push(i.to_string())
+        let method = match start_line.index(0).to_uppercase().as_str() {
+            "GET" => HTTPMethod::GET,
+            "POST" => HTTPMethod::POST,
+            "HEAD" => HTTPMethod::HEAD,
+            "PUT" => HTTPMethod::PUT,
+            "DELETE" => HTTPMethod::DELETE,
+            "CONNECT" => HTTPMethod::CONNECT,
+            "OPTIONS" => HTTPMethod::OPTIONS,
+            "TRACE" => HTTPMethod::TRACE,
+            _ => HTTPMethod::GET 
+        };
+
+        let path = start_line.index(1).to_string();
+
+        let version = start_line.index(2)
+            .split("/").collect::<Vec<&str>>().index(1)
+            .parse::<f32>().expect("Error reading HTTP version");
+
+        let mut body = request.last().unwrap().to_string();
+        request.pop();
+        body = body.replace("\0", "");
+
+        // remove the \r\n\r\n between the headers and the body
+        if request.last().unwrap() == &"" {
+            request.pop();
         }
 
-        let line_one: Vec<&str> = req[0].split(' ').collect();
-
-        let method = line_one[0].to_string();
-        let path = line_one[1].to_string();
-
-        let mut trash: Vec<&str> = line_one[2].split('/').collect(); //useless
-        let version = trash[1].parse::<f32>().unwrap();
-
-        trash = req[req.len() - 1].split('\0').collect();
-        let body = trash[0].to_string();
-
-        req.remove(0);
-        req.remove(req.len() - 1);
-        req.remove(req.len() - 1);
-
-        let headers: Vec<String> = req.to_vec(); // minus 2 'cause the last is the body and penultimate is "\r\n\r\n"
+        let mut headers = Vec::new();
+        for header in request {
+            headers.push(header.to_string())
+        }
 
         Request {
             method,
