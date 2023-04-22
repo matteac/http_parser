@@ -3,7 +3,7 @@ Converts raw request to `Request`
 
 ### Parse the raw http request to `Request`
 ```rust
-        let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
+    let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
     for stream in listener.incoming() {
         let mut tcp_stream = stream.unwrap();
         let mut buffer = [0; 16384];
