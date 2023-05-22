@@ -1,7 +1,7 @@
 use crate::error::ParseError;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum HTTPMethod {
     GET,
     POST,
@@ -57,7 +57,7 @@ pub struct Request {
 
 impl Request {
     pub fn new() -> RequestBuilder {
-        return RequestBuilder::default();
+        RequestBuilder::default()
     }
     pub fn from(source: &str) -> Result<Request, ParseError> {
         let lines = source.lines().collect::<Vec<&str>>();
@@ -65,12 +65,12 @@ impl Request {
         let mut headers: HashMap<String, String> = HashMap::new();
         let mut body = String::new();
 
-        if lines.len() <= 0 {
+        if lines.is_empty() {
             return Err(perr);
         }
 
         let fst_line = lines
-            .get(0)
+            .first()
             .unwrap()
             .split_whitespace()
             .collect::<Vec<&str>>();
@@ -79,30 +79,30 @@ impl Request {
             return Err(perr);
         }
 
-        let md = fst_line.get(0).unwrap();
-        match HTTPMethod::from_str(md.clone()) {
+        let md = fst_line.first().unwrap();
+        match HTTPMethod::from_str(<&str>::clone(md)) {
             Some(_) => (),
             None => return Err(ParseError::new("Error parsing HTTP method")),
         }
 
         let pth = fst_line.get(1).unwrap();
-        if !pth.contains("/") {
+        if !pth.contains('/') {
             return Err(ParseError::new("Error parsing HTTP path"));
         }
         let v = fst_line.get(2).unwrap();
         let v = v.split('/').collect::<Vec<&str>>();
 
-        if v.len() < 1 {
+        if v.is_empty() {
             return Err(ParseError::new("Error parsing HTTP version"));
         }
         let v = v.get(1).unwrap();
-        match v.parse::<f32>() {
-            Err(_) => return Err(ParseError::new("Error parsing HTTP version")),
-            Ok(_) => (),
+        if v.parse::<f32>().is_err() {
+            return Err(ParseError::new("Error parsing HTTP version"));
         }
+
         let mut b = false;
         for (idx, line) in lines.iter().enumerate() {
-            if b == true {
+            if b {
                 body.push_str(line);
                 continue;
             }
@@ -113,9 +113,9 @@ impl Request {
                 b = true;
                 continue;
             }
-            let header = line.split(":").collect::<Vec<&str>>();
+            let header = line.split(':').collect::<Vec<&str>>();
 
-            match header.get(0) {
+            match header.first() {
                 Some(_) => (),
                 None => return Err(ParseError::new("Error parsing HTTP headers")),
             }
@@ -124,15 +124,15 @@ impl Request {
                 None => return Err(ParseError::new("Error parsing HTTP headers")),
             }
             headers.insert(
-                header.get(0).unwrap().trim().to_string(),
+                header.first().unwrap().trim().to_string(),
                 header.get(1).unwrap().trim().to_string(),
             );
         }
 
         return Self::new()
-            .path(pth.clone())
-            .method(md.clone())
-            .version(v.clone())
+            .path(<&str>::clone(pth))
+            .method(<&str>::clone(md))
+            .version(<&str>::clone(v))
             .headers(headers)
             .body(body)
             .build();
@@ -151,11 +151,11 @@ pub struct RequestBuilder {
 
 impl RequestBuilder {
     pub fn new() -> Self {
-        return Self::default();
+        Self::default()
     }
     fn headers(&mut self, headers: HashMap<String, String>) -> &mut Self {
         let _ = self.headers.insert(headers);
-        return self;
+        self
     }
     pub fn method(&mut self, method: impl Into<String>) -> &mut Self {
         let method = HTTPMethod::from_str(method.into());
@@ -165,25 +165,21 @@ impl RequestBuilder {
         if let Some(method) = method {
             let _ = self.method.insert(method);
         }
-        return self;
+        self
     }
     pub fn path(&mut self, path: impl Into<String>) -> &mut Self {
         let _ = self.path.insert(path.into());
 
-        return self;
+        self
     }
     pub fn version(&mut self, version: impl Into<String>) -> &mut Self {
         let version = version.into().parse::<f32>();
 
         // if version.parse returns an error dont change anything (default value is None)
-        match version {
-            Ok(v) => {
-                let _ = self.version.insert(v);
-                ()
-            }
-            Err(_) => (),
+        if let Ok(v) = version {
+            let _ = self.version.insert(v);
         }
-        return self;
+        self
     }
     pub fn header(&mut self, key: impl Into<String>, value: impl Into<String>) -> &mut Self {
         if let Some(ref mut headers) = self.headers {
@@ -192,11 +188,11 @@ impl RequestBuilder {
             let header = HashMap::from([(key.into(), value.into())]);
             let _ = self.headers.insert(header);
         }
-        return self;
+        self
     }
     pub fn body(&mut self, body: impl Into<String>) -> &mut Self {
         let _ = self.body.insert(body.into());
-        return self;
+        self
     }
     pub fn build(&self) -> Result<Request, ParseError> {
         // may be None
@@ -207,7 +203,7 @@ impl RequestBuilder {
         // may be None
         let headers: HashMap<String, String> = match self.headers.clone() {
             Some(b) => b,
-            None => HashMap::new().into(),
+            None => HashMap::new(),
         };
 
         // SHOULDN'T BE NONE
@@ -223,12 +219,12 @@ impl RequestBuilder {
             Some(b) => b.into(),
             None => return Err(ParseError::new("Unspecified HTTP path")),
         };
-        return Ok(Request {
+        Ok(Request {
             body,
             method,
             version,
             headers,
             path,
-        });
+        })
     }
 }
