@@ -1,7 +1,7 @@
 use crate::error::ParseError;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub enum HTTPMethod {
     GET,
     POST,
